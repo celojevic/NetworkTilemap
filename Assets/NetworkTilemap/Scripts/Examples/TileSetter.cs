@@ -14,11 +14,11 @@ namespace gooby.NetworkTilemaps.Examples
 
         [Tooltip("NetworkTilemap to set the tile on.")]
         [SerializeField]
-        private NetworkTilemap _tilemap = null;
+        private NetworkTilemap _netTilemap = null;
 
         private void Awake()
         {
-            _tilemap = FindObjectOfType<NetworkTilemap>();
+            _netTilemap = FindObjectOfType<NetworkTilemap>();
         }
 
         private void Update()
@@ -27,11 +27,21 @@ namespace gooby.NetworkTilemaps.Examples
             {
                 if (Input.GetMouseButtonDown(0))
                 {
-                    CmdSetTile(Vector3Int.FloorToInt(Camera.main.ScreenToWorldPoint(Input.mousePosition)));
+                    Vector3Int tilePos = Vector3Int.FloorToInt(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                    tilePos.z = 0;
+                    CmdSetTile(tilePos);
+                }
+                else if (Input.GetMouseButtonDown(1))
+                {
+                    Vector3Int tilePos = Vector3Int.FloorToInt(Camera.main.ScreenToWorldPoint(Input.mousePosition));
+                    tilePos.z = 0;
+                    if (_netTilemap.Tilemap.HasTile(tilePos))
+                        CmdRemoveTile(tilePos);
                 }
                 else if (Input.GetKeyDown(KeyCode.Escape))
                 {
-                    CmdClearAllTiles();
+                    if (_netTilemap.Tilemap.GetUsedTilesCount() > 0)
+                        CmdClearAllTiles();
                 }                
             }
         }
@@ -39,13 +49,19 @@ namespace gooby.NetworkTilemaps.Examples
         [ServerRpc]
         void CmdClearAllTiles()
         {
-            _tilemap.Tilemap.ClearAllTiles();
+            _netTilemap.Tilemap.ClearAllTiles();
         }
 
         [ServerRpc]
         void CmdSetTile(Vector3Int tilePos)
         {
-            _tilemap.Tilemap.SetTile(tilePos, _tile);
+            _netTilemap.Tilemap.SetTile(tilePos, _tile);
+        }
+
+        [ServerRpc]
+        void CmdRemoveTile(Vector3Int tilePos)
+        {
+            _netTilemap.Tilemap.SetTile(tilePos, null);
         }
 
     }
