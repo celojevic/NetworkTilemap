@@ -455,7 +455,6 @@ MonoBehaviour:
   _sceneNetworkObjects:
   - {fileID: 7150011}
   - {fileID: 544257418}
-  - {fileID: 0}
 --- !u!1 &351472359
 GameObject:
   m_ObjectHideFlags: 0
@@ -652,7 +651,7 @@ Transform:
   m_Children:
   - {fileID: 7150007}
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &544257418
 MonoBehaviour:
@@ -673,7 +672,6 @@ MonoBehaviour:
   <ParentNetworkObject>k__BackingField: {fileID: 0}
   <ChildNetworkObjects>k__BackingField:
   - {fileID: 7150011}
-  - {fileID: 0}
   _isNetworked: 1
   _isGlobal: 0
   _defaultDespawnType: 0
@@ -685,7 +683,6 @@ MonoBehaviour:
   _sceneNetworkObjects:
   - {fileID: 7150011}
   - {fileID: 544257418}
-  - {fileID: 0}
 --- !u!114 &544257419
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -718,7 +715,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 7443408887813606049, guid: 0b650fca685f2eb41a86538aa883e4c1, type: 3}
       propertyPath: m_RootOrder
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7443408887813606049, guid: 0b650fca685f2eb41a86538aa883e4c1, type: 3}
       propertyPath: m_LocalPosition.x

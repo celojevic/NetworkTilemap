@@ -18,7 +18,7 @@ namespace gooby.NetworkTilemaps.Examples
 
         private void Awake()
         {
-            _netTilemap = FindObjectOfType<NetworkTilemap>();
+            _netTilemap = FindObjectOfType<NetworkTilemap>(true);
         }
 
         private void Update()
