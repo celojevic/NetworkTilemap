@@ -16,6 +16,7 @@ namespace gooby.NetworkTilemaps
         [Tooltip("Child NetworkTilemaps.")]
         [SerializeField] private NetworkTilemap[] _networkTilemaps = null;
 
+        [Tooltip("Sibling grid component to sync over the network.")]
         [SerializeField] private Grid _grid = null;
 
 

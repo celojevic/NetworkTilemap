@@ -4,7 +4,6 @@
 using FishNet.Managing.Logging;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -47,11 +46,18 @@ namespace gooby.NetworkTilemaps
         }
 
 
+        [Header("Network Tilemap Settings")]
+        [Tooltip("Sibling tilemap component to sync over the network.")]
+        [SerializeField]
+        private Tilemap _tilemap = null;
+        public Tilemap Tilemap => _tilemap;
+
         [Tooltip("True to automatically cache the tiles in the sibling tilemap to the _tiles list.")]
         [SerializeField] 
         private bool _cacheCurrentTilesInMap = true;
 
-        [Tooltip("True to clear all map tiles when server starts.")]
+        [Tooltip("True to clear all map tiles when server starts. " +
+            "Note that if _cacheCurrentTilesInMap is true, no tiles will be cached.")]
         [SerializeField] 
         private bool _clearTilemapOnServerStart = true;
 
@@ -60,10 +66,28 @@ namespace gooby.NetworkTilemaps
         private List<TileBase> _tiles = new List<TileBase>();
         public List<TileBase> Tiles => _tiles;
 
-        [Tooltip("Sibling tilemap component to sync over the network.")]
-        [SerializeField] 
-        private Tilemap _tilemap = null;
-        public Tilemap Tilemap => _tilemap;
+
+        [Header("Tilemap Settings")]
+        [Tooltip("The frame rate for all Tile animations in the Tilemap.")]
+        [SyncVar(OnChange = nameof(OnAnimationFrameRateChanged))]
+        public float AnimationFrameRate = 1f;
+        private void OnAnimationFrameRateChanged(float prev, float next, bool asServer) => _tilemap.animationFrameRate = next;
+
+        [Tooltip("The color of the Tilemap layer.")]
+        [SyncVar(OnChange = nameof(OnColorChanged))]
+        public Color Color = Color.white;
+        private void OnColorChanged(Color prev, Color next, bool asServer) => _tilemap.color = next;
+
+        [Tooltip("Gets the anchor point of Tiles in the Tilemap.")]
+        [SyncVar(OnChange = nameof(OnTileAnchorChanged))]
+        public Vector3 TileAnchor = new Vector3(0.5f, 0.5f, 0f);
+        private void OnTileAnchorChanged(Vector3 prev, Vector3 next, bool asServer) => _tilemap.tileAnchor = next;
+
+        [Tooltip("Orientation of the Tiles in the Tilemap.")]
+        [SyncVar(OnChange = nameof(OnOrientationChanged))]
+        public Tilemap.Orientation Orientation = Tilemap.Orientation.XY;
+        private void OnOrientationChanged(Tilemap.Orientation prev, Tilemap.Orientation next, bool asServer) => _tilemap.orientation = next;
+
 
         [Header("Debug")]
         [Tooltip("Set debug log level.")]
@@ -81,10 +105,9 @@ namespace gooby.NetworkTilemaps
         {
             _tilemap = GetComponent<Tilemap>();
 
-            if (_tiles.Count == 0)
+            if (_tiles.Count == 0 && _logLevel >= LoggingType.Warning)
             {
-                if (_logLevel >= LoggingType.Warning)
-                    Debug.LogWarning("No tiles set to sync on " + name);
+                Debug.LogWarning("No tiles set to sync on " + name);
             }
         }
 
@@ -120,33 +143,12 @@ namespace gooby.NetworkTilemaps
                 _tilemap.ClearAllTiles();
 
             Tilemap.tilemapTileChanged += Tilemap_tilemapTileChanged;
-
-            // test
-            //StartCoroutine(SetTileTest());
-        }
-
-        IEnumerator SetTileTest()
-        {
-            while (true)
-            {
-                if (_tiles.Count > 0)
-                {
-                    int x = Random.Range(0, 10);
-                    int y = Random.Range(0, 10);
-                    var rand = _tiles[Random.Range(0, _tiles.Count)];
-
-                    _tilemap.SetTile(new Vector3Int(x, y, 0), rand);
-                }
-
-                yield return new WaitForSeconds(2f);
-            }
         }
 
         public override void OnStopServer()
         {
             base.OnStopServer();
 
-            StopAllCoroutines();
             Tilemap.tilemapTileChanged -= Tilemap_tilemapTileChanged;
         }
 
@@ -161,19 +163,28 @@ namespace gooby.NetworkTilemaps
             if (_logLevel >= LoggingType.Common)
                 Debug.Log($"Tilemap: {tilemap.name}. Tile count: {tiles.Length}.");
 
-            foreach (var item in tiles)
+            foreach (Tilemap.SyncTile item in tiles)
             {
-                if (!_syncTiles.ContainsKey(item.position))
+                // removing tile
+                if (item.tile == null && _syncTiles.ContainsKey(item.position))
                 {
-                    _syncTiles.Add(item.position, new NetworkTileData { Position = item.position, TileName = item.tile.name });
+                    _syncTiles.Remove(item.position);
                     if (_logLevel >= LoggingType.Common)
-                        Debug.Log($"Added tile {item.tile.name} at {item.position}");
+                        Debug.Log($"Removed tile at {item.position}");
                 }
+                // adding tile
+                else if (!_syncTiles.ContainsKey(item.position))
+                {
+                    _syncTiles.Add(item.position, new NetworkTileData { Position = item.position, TileName = item.tile?.name });
+                    if (_logLevel >= LoggingType.Common)
+                        Debug.Log($"Added tile {item.tile?.name} at {item.position}");
+                }
+                // updating existing tile
                 else
                 {
-                    _syncTiles[item.position] = new NetworkTileData { Position = item.position, TileName = item.tile.name };
+                    _syncTiles[item.position] = new NetworkTileData { Position = item.position, TileName = item.tile?.name };
                     if (_logLevel >= LoggingType.Common)
-                        Debug.Log($"Set tile {item.tile.name} at {item.position}");
+                        Debug.Log($"Set tile {item.tile?.name} at {item.position}");
                 }
             }
         }
@@ -218,7 +229,6 @@ namespace gooby.NetworkTilemaps
         {
             return _tiles.Find(x => x.name == name);
         }
-
 
     }
 }

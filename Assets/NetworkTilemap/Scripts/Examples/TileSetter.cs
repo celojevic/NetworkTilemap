@@ -29,7 +29,17 @@ namespace gooby.NetworkTilemaps.Examples
                 {
                     CmdSetTile(Vector3Int.FloorToInt(Camera.main.ScreenToWorldPoint(Input.mousePosition)));
                 }
+                else if (Input.GetKeyDown(KeyCode.Escape))
+                {
+                    CmdClearAllTiles();
+                }                
             }
+        }
+
+        [ServerRpc]
+        void CmdClearAllTiles()
+        {
+            _tilemap.Tilemap.ClearAllTiles();
         }
 
         [ServerRpc]
